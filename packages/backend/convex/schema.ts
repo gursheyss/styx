@@ -4,6 +4,7 @@ import { v } from "convex/values";
 const healthMetricValidator = v.union(
   v.literal("step_count"),
   v.literal("active_energy_kcal"),
+  v.literal("dietary_energy_kcal"),
   v.literal("resting_heart_rate_bpm"),
   v.literal("hrv_sdnn_ms"),
   v.literal("body_mass_kg"),
@@ -46,6 +47,8 @@ export default defineSchema({
     stepCountSamples: v.number(),
     activeEnergyKcalTotal: v.number(),
     activeEnergyKcalSamples: v.number(),
+    dietaryEnergyKcalTotal: v.number(),
+    dietaryEnergyKcalSamples: v.number(),
     restingHeartRateAvg: v.number(),
     restingHeartRateMin: v.number(),
     restingHeartRateMax: v.number(),
@@ -72,4 +75,35 @@ export default defineSchema({
     sleepTotalAsleepMs: v.number(),
     recomputedAtMs: v.number(),
   }).index("by_day", ["dayKey"]),
+  healthWriteIntents: defineTable({
+    externalId: v.string(),
+    metric: v.union(v.literal("active_energy_kcal"), v.literal("dietary_energy_kcal")),
+    startTimeMs: v.number(),
+    endTimeMs: v.number(),
+    valueNumber: v.number(),
+    unit: v.string(),
+    timezone: v.string(),
+    note: v.optional(v.string()),
+    sourceName: v.optional(v.string()),
+    sourceBundleId: v.optional(v.string()),
+    tags: v.array(v.string()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("applied"),
+      v.literal("failed"),
+      v.literal("skipped"),
+    ),
+    attemptCount: v.number(),
+    createdAtMs: v.number(),
+    updatedAtMs: v.number(),
+    nextRetryAtMs: v.number(),
+    lastAttemptAtMs: v.optional(v.number()),
+    healthkitUuid: v.optional(v.string()),
+    failureCode: v.optional(v.string()),
+    failureMessage: v.optional(v.string()),
+    appliedAtMs: v.optional(v.number()),
+  })
+    .index("by_external_id", ["externalId"])
+    .index("by_status_and_created", ["status", "createdAtMs"])
+    .index("by_status_and_retry_time", ["status", "nextRetryAtMs"]),
 });

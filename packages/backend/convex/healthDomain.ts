@@ -133,6 +133,8 @@ type DailyAccumulator = {
   stepCountSamples: number;
   activeEnergyKcalTotal: number;
   activeEnergyKcalSamples: number;
+  dietaryEnergyKcalTotal: number;
+  dietaryEnergyKcalSamples: number;
   restingHeartRate: NumericAccumulator;
   hrvSdnn: NumericAccumulator;
   bodyMassKg: NumericAccumulator;
@@ -175,6 +177,8 @@ function createAccumulator(dayKey: string, timezone: string): DailyAccumulator {
     stepCountSamples: 0,
     activeEnergyKcalTotal: 0,
     activeEnergyKcalSamples: 0,
+    dietaryEnergyKcalTotal: 0,
+    dietaryEnergyKcalSamples: 0,
     restingHeartRate: createNumericAccumulator(),
     hrvSdnn: createNumericAccumulator(),
     bodyMassKg: createNumericAccumulator(),
@@ -258,6 +262,12 @@ export function buildDailyAggregateRecord(
       continue;
     }
 
+    if (sample.metric === "dietary_energy_kcal" && sample.valueNumber !== undefined) {
+      accumulator.dietaryEnergyKcalTotal += sample.valueNumber;
+      accumulator.dietaryEnergyKcalSamples += 1;
+      continue;
+    }
+
     if (sample.metric === "resting_heart_rate_bpm" && sample.valueNumber !== undefined) {
       applyNumeric(accumulator.restingHeartRate, sample.valueNumber);
       continue;
@@ -296,6 +306,8 @@ export function buildDailyAggregateRecord(
     stepCountSamples: accumulator.stepCountSamples,
     activeEnergyKcalTotal: accumulator.activeEnergyKcalTotal,
     activeEnergyKcalSamples: accumulator.activeEnergyKcalSamples,
+    dietaryEnergyKcalTotal: accumulator.dietaryEnergyKcalTotal,
+    dietaryEnergyKcalSamples: accumulator.dietaryEnergyKcalSamples,
     restingHeartRateAvg: averageFromAccumulator(accumulator.restingHeartRate),
     restingHeartRateMin: accumulator.restingHeartRate.min,
     restingHeartRateMax: accumulator.restingHeartRate.max,

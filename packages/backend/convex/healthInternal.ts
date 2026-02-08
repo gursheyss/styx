@@ -19,6 +19,7 @@ import {
 const healthMetricValidator = v.union(
   v.literal("step_count"),
   v.literal("active_energy_kcal"),
+  v.literal("dietary_energy_kcal"),
   v.literal("resting_heart_rate_bpm"),
   v.literal("hrv_sdnn_ms"),
   v.literal("body_mass_kg"),
@@ -212,6 +213,11 @@ export const listDaily = internalQuery({
         active_energy_kcal: {
           total: row.activeEnergyKcalTotal,
           sampleCount: row.activeEnergyKcalSamples,
+          unit: "kcal",
+        },
+        dietary_energy_kcal: {
+          total: row.dietaryEnergyKcalTotal,
+          sampleCount: row.dietaryEnergyKcalSamples,
           unit: "kcal",
         },
         resting_heart_rate_bpm: {
