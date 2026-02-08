@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@styx/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { Button, Chip, Divider, Spinner, Surface, useThemeColor } from "heroui-native";
+import { Chip, Spinner, Surface, useThemeColor } from "heroui-native";
 import { Text, View } from "react-native";
 
 import { Container } from "@/components/container";
@@ -31,7 +31,7 @@ export default function Home() {
           </Chip>
         </View>
 
-        <Divider className="mb-3" />
+        <View className="h-px bg-border mb-3" />
 
         <Surface variant="tertiary" className="p-3 rounded-md">
           <View className="flex-row items-center">

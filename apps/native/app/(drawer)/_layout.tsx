@@ -65,6 +65,22 @@ function DrawerLayout() {
           ),
         }}
       />
+      <Drawer.Screen
+        name="health"
+        options={{
+          headerTitle: "Health",
+          drawerLabel: ({ color, focused }) => (
+            <Text style={{ color: focused ? color : themeColorForeground }}>Health</Text>
+          ),
+          drawerIcon: ({ size, color, focused }) => (
+            <Ionicons
+              name="heart-outline"
+              size={size}
+              color={focused ? color : themeColorForeground}
+            />
+          ),
+        }}
+      />
     </Drawer>
   );
 }
