@@ -1,5 +1,6 @@
 export { registerHealthBackgroundSync } from "./background";
-export { runHealthSync, getLastSyncSummary, buildCursorWindow, shouldRetryHealthError } from "./sync";
+export { runHealthSync, getLastSyncSummary } from "./sync";
+export { buildCursorWindow, shouldRetryHealthError } from "./sync-logic";
 export {
   isHealthKitAvailable,
   isHealthKitSupportedPlatform,

@@ -1,16 +1,7 @@
 import { env } from "@styx/env/native";
 
+import { HealthApiError } from "./errors";
 import type { HealthIngestRequest, HealthIngestResponse, HealthMetric } from "./types";
-
-export class HealthApiError extends Error {
-  readonly statusCode: number | null;
-
-  constructor(message: string, statusCode: number | null) {
-    super(message);
-    this.name = "HealthApiError";
-    this.statusCode = statusCode;
-  }
-}
 
 const DEFAULT_HEADERS = {
   Authorization: `Bearer ${env.EXPO_PUBLIC_HEALTH_API_TOKEN}`,

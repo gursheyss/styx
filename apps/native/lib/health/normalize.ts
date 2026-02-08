@@ -1,14 +1,37 @@
-import {
-  CategoryValueSleepAnalysis,
-  type CategorySampleTyped,
-  type QuantitySample,
-} from "@kingstinct/react-native-healthkit";
-
 import type { HealthIngestSample, HealthMetric, SleepCategoryValue } from "./types";
 
-const SLEEP_IDENTIFIER = "HKCategoryTypeIdentifierSleepAnalysis";
-
 type NumericMetric = Exclude<HealthMetric, "sleep_segment">;
+
+const SLEEP_VALUE_IN_BED = 0;
+const SLEEP_VALUE_ASLEEP_UNSPECIFIED = 1;
+const SLEEP_VALUE_AWAKE = 2;
+const SLEEP_VALUE_ASLEEP_CORE = 3;
+const SLEEP_VALUE_ASLEEP_DEEP = 4;
+const SLEEP_VALUE_ASLEEP_REM = 5;
+
+type SourceRevisionLike = {
+  source: {
+    name: string;
+    bundleIdentifier: string;
+  };
+};
+
+type QuantitySampleLike = {
+  uuid: string;
+  startDate: Date;
+  endDate: Date;
+  quantity: number;
+  unit: string;
+  sourceRevision: SourceRevisionLike;
+};
+
+type SleepSampleLike = {
+  uuid: string;
+  startDate: Date;
+  endDate: Date;
+  value: number;
+  sourceRevision: SourceRevisionLike;
+};
 
 function toMs(value: Date): number {
   return value.getTime();
@@ -29,27 +52,27 @@ function buildSampleKey(metric: HealthMetric, sampleUuid: string): string {
 }
 
 export function mapSleepCategoryValue(value: number): SleepCategoryValue | null {
-  if (value === CategoryValueSleepAnalysis.inBed) {
+  if (value === SLEEP_VALUE_IN_BED) {
     return "inBed";
   }
 
-  if (value === CategoryValueSleepAnalysis.awake) {
+  if (value === SLEEP_VALUE_AWAKE) {
     return "awake";
   }
 
-  if (value === CategoryValueSleepAnalysis.asleepCore) {
+  if (value === SLEEP_VALUE_ASLEEP_CORE) {
     return "asleepCore";
   }
 
-  if (value === CategoryValueSleepAnalysis.asleepDeep) {
+  if (value === SLEEP_VALUE_ASLEEP_DEEP) {
     return "asleepDeep";
   }
 
-  if (value === CategoryValueSleepAnalysis.asleepREM) {
+  if (value === SLEEP_VALUE_ASLEEP_REM) {
     return "asleepREM";
   }
 
-  if (value === CategoryValueSleepAnalysis.asleepUnspecified) {
+  if (value === SLEEP_VALUE_ASLEEP_UNSPECIFIED) {
     return "asleep";
   }
 
@@ -58,7 +81,7 @@ export function mapSleepCategoryValue(value: number): SleepCategoryValue | null 
 
 export function normalizeQuantitySamples(
   metric: NumericMetric,
-  samples: readonly QuantitySample[],
+  samples: readonly QuantitySampleLike[],
   timezone: string,
 ): HealthIngestSample[] {
   return samples
@@ -85,7 +108,7 @@ export function normalizeQuantitySamples(
 }
 
 export function normalizeSleepSamples(
-  samples: readonly CategorySampleTyped<typeof SLEEP_IDENTIFIER>[],
+  samples: readonly SleepSampleLike[],
   timezone: string,
 ): HealthIngestSample[] {
   const normalized: HealthIngestSample[] = [];
