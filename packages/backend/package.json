@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "convex dev",
     "dev:setup": "convex dev --configure --until-success",
-    "test": "bun test convex/healthDomain.test.ts convex/healthHttpHandlers.test.ts"
+    "test": "bun test convex/healthDomain.test.ts convex/healthHttpHandlers.test.ts convex/healthSummary.test.ts convex/healthSummaryHttpHandlers.test.ts convex/healthWriteIntentHttpHandlers.test.ts convex/healthOpenApi.test.ts",
+    "check-types": "tsc -p convex/tsconfig.json --noEmit"
   },
   "dependencies": {
     "convex": "catalog:",
