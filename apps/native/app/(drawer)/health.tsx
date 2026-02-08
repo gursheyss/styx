@@ -146,6 +146,18 @@ export default function HealthScreen() {
             <Text className="text-muted">
               Recomputed days: {summary?.recomputedDays.length ?? 0}
             </Text>
+            <Text className="text-muted">
+              Write intents pulled: {summary?.writeBack.totalPulled ?? 0}
+            </Text>
+            <Text className="text-muted">
+              Write applied: {summary?.writeBack.applied ?? 0}
+            </Text>
+            <Text className="text-muted">
+              Write failed: {summary?.writeBack.failed ?? 0}
+            </Text>
+            <Text className="text-muted">
+              Write skipped: {summary?.writeBack.skipped ?? 0}
+            </Text>
           </View>
 
           <View className="mt-4">

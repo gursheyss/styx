@@ -14,7 +14,7 @@
         "@kingstinct/react-native-healthkit",
         {
           "NSHealthShareUsageDescription": "Styx reads your Health data to sync your personal dashboard.",
-          "NSHealthUpdateUsageDescription": "Styx can update Health data sync metadata for your account.",
+          "NSHealthUpdateUsageDescription": "Styx writes approved calorie entries to Health for two-way sync.",
           "background": true
         }
       ]

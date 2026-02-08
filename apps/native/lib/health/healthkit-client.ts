@@ -3,17 +3,20 @@ import {
   queryCategorySamples,
   queryQuantitySamples,
   requestAuthorization,
+  saveQuantitySample,
   type ObjectTypeIdentifier,
   type QuantityTypeIdentifier,
+  type SampleTypeIdentifierWriteable,
 } from "@kingstinct/react-native-healthkit";
 import { Platform } from "react-native";
 
 import { normalizeQuantitySamples, normalizeSleepSamples } from "./normalize";
-import type { HealthIngestSample, HealthMetric } from "./types";
+import type { HealthIngestSample, HealthMetric, HealthWriteIntent } from "./types";
 
 const SLEEP_IDENTIFIER = "HKCategoryTypeIdentifierSleepAnalysis";
 const STEP_COUNT_IDENTIFIER = "HKQuantityTypeIdentifierStepCount";
 const ACTIVE_ENERGY_IDENTIFIER = "HKQuantityTypeIdentifierActiveEnergyBurned";
+const DIETARY_ENERGY_IDENTIFIER = "HKQuantityTypeIdentifierDietaryEnergyConsumed";
 const RESTING_HEART_RATE_IDENTIFIER = "HKQuantityTypeIdentifierRestingHeartRate";
 const HRV_SDNN_IDENTIFIER = "HKQuantityTypeIdentifierHeartRateVariabilitySDNN";
 const BODY_MASS_IDENTIFIER = "HKQuantityTypeIdentifierBodyMass";
@@ -22,11 +25,17 @@ const BODY_FAT_IDENTIFIER = "HKQuantityTypeIdentifierBodyFatPercentage";
 const READ_IDENTIFIERS: readonly ObjectTypeIdentifier[] = [
   STEP_COUNT_IDENTIFIER,
   ACTIVE_ENERGY_IDENTIFIER,
+  DIETARY_ENERGY_IDENTIFIER,
   RESTING_HEART_RATE_IDENTIFIER,
   HRV_SDNN_IDENTIFIER,
   BODY_MASS_IDENTIFIER,
   BODY_FAT_IDENTIFIER,
   SLEEP_IDENTIFIER,
+];
+
+const WRITE_IDENTIFIERS: readonly SampleTypeIdentifierWriteable[] = [
+  ACTIVE_ENERGY_IDENTIFIER,
+  DIETARY_ENERGY_IDENTIFIER,
 ];
 
 function queryDateFilter(fromMs: number, toMs: number): {
@@ -91,6 +100,16 @@ export async function requestHealthKitReadPermissions(): Promise<boolean> {
   });
 }
 
+export async function requestHealthKitWritePermissions(): Promise<boolean> {
+  if (!isHealthKitSupportedPlatform()) {
+    return false;
+  }
+
+  return requestAuthorization({
+    toShare: WRITE_IDENTIFIERS,
+  });
+}
+
 export function deviceTimezone(): string {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   if (timezone === undefined || timezone.trim().length === 0) {
@@ -111,6 +130,10 @@ export async function fetchMetricSamples(
 
   if (metric === "active_energy_kcal") {
     return queryNumericMetric(ACTIVE_ENERGY_IDENTIFIER, metric, "kcal", fromMs, toMs, timezone);
+  }
+
+  if (metric === "dietary_energy_kcal") {
+    return queryNumericMetric(DIETARY_ENERGY_IDENTIFIER, metric, "kcal", fromMs, toMs, timezone);
   }
 
   if (metric === "resting_heart_rate_bpm") {
@@ -135,4 +158,61 @@ export async function fetchMetricSamples(
     ...queryDateFilter(fromMs, toMs),
   });
   return normalizeSleepSamples(samples, timezone);
+}
+
+function writeMetricIdentifier(metric: HealthWriteIntent["metric"]): QuantityTypeIdentifier {
+  if (metric === "active_energy_kcal") {
+    return ACTIVE_ENERGY_IDENTIFIER;
+  }
+
+  return DIETARY_ENERGY_IDENTIFIER;
+}
+
+export async function applyWriteIntentToHealthKit(intent: HealthWriteIntent): Promise<{
+  status: "applied" | "failed" | "skipped";
+  healthkitUuid?: string;
+  errorCode?: string;
+  errorMessage?: string;
+}> {
+  if (!isHealthKitSupportedPlatform()) {
+    return {
+      status: "skipped",
+      errorCode: "unsupported_platform",
+      errorMessage: "HealthKit write-back is only available on iOS",
+    };
+  }
+
+  try {
+    const sample = await saveQuantitySample(
+      writeMetricIdentifier(intent.metric),
+      intent.unit,
+      intent.valueNumber,
+      new Date(intent.startTimeMs),
+      new Date(intent.endTimeMs),
+      {
+        HKSyncIdentifier: intent.externalId,
+        HKSyncVersion: 1,
+      },
+    );
+
+    if (sample === undefined) {
+      return {
+        status: "failed",
+        errorCode: "empty_healthkit_response",
+        errorMessage: "HealthKit did not return a sample reference",
+      };
+    }
+
+    return {
+      status: "applied",
+      healthkitUuid: sample.uuid,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown HealthKit write error";
+    return {
+      status: "failed",
+      errorCode: "healthkit_write_error",
+      errorMessage: message,
+    };
+  }
 }

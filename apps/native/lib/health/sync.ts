@@ -17,6 +17,7 @@ import {
   type HealthSyncMetricStats,
   type HealthSyncSummary,
 } from "./types";
+import { runHealthWriteBack } from "./writeback";
 
 const CURSOR_KEY_PREFIX = "health-sync-cursor:";
 const LAST_SYNC_SUMMARY_KEY = "health-last-sync-summary";
@@ -127,6 +128,7 @@ function parseSummary(rawValue: string | null): HealthSyncSummary | null {
     const deduped = toFiniteNumber(parsed.deduped);
     const recomputedDays = parsed.recomputedDays;
     const metrics = parsed.metrics;
+    const writeBack = parsed.writeBack;
 
     if (
       startedAtMs === null ||
@@ -137,6 +139,33 @@ function parseSummary(rawValue: string | null): HealthSyncSummary | null {
       !Array.isArray(metrics)
     ) {
       return null;
+    }
+
+    let writeBackSummary: HealthSyncSummary["writeBack"] = {
+      totalPulled: 0,
+      applied: 0,
+      failed: 0,
+      skipped: 0,
+    };
+    if (isRecord(writeBack)) {
+      const totalPulled = toFiniteNumber(writeBack.totalPulled);
+      const applied = toFiniteNumber(writeBack.applied);
+      const failed = toFiniteNumber(writeBack.failed);
+      const skipped = toFiniteNumber(writeBack.skipped);
+
+      if (
+        totalPulled !== null &&
+        applied !== null &&
+        failed !== null &&
+        skipped !== null
+      ) {
+        writeBackSummary = {
+          totalPulled,
+          applied,
+          failed,
+          skipped,
+        };
+      }
     }
 
     const parsedMetrics: HealthSyncMetricStats[] = [];
@@ -185,6 +214,7 @@ function parseSummary(rawValue: string | null): HealthSyncSummary | null {
       deduped,
       recomputedDays: recomputedDays.filter((day): day is string => typeof day === "string"),
       metrics: parsedMetrics,
+      writeBack: writeBackSummary,
     };
   } catch {
     return null;
@@ -276,6 +306,18 @@ export async function runHealthSync(): Promise<HealthSyncRunResult> {
     metrics.push(metricStats);
   }
 
+  let writeBack: HealthSyncSummary["writeBack"] = {
+    totalPulled: 0,
+    applied: 0,
+    failed: 0,
+    skipped: 0,
+  };
+  try {
+    writeBack = await runHealthWriteBack();
+  } catch {
+    // Read sync succeeded; keep write-back best effort.
+  }
+
   const summary: HealthSyncSummary = {
     startedAtMs,
     completedAtMs: Date.now(),
@@ -283,6 +325,7 @@ export async function runHealthSync(): Promise<HealthSyncRunResult> {
     deduped: totalDeduped,
     recomputedDays: Array.from(recomputedDays).sort(),
     metrics,
+    writeBack,
   };
 
   await saveLastSyncSummary(summary);

@@ -1,7 +1,16 @@
 import { env } from "@styx/env/native";
 
 import { HealthApiError } from "./errors";
-import type { HealthIngestRequest, HealthIngestResponse, HealthMetric } from "./types";
+import type {
+  HealthIngestRequest,
+  HealthIngestResponse,
+  HealthDailySummary,
+  HealthSummaryRange,
+  HealthMetric,
+  HealthWriteIntent,
+  HealthWriteIntentAckRequest,
+  HealthWriteIntentPayload,
+} from "./types";
 
 const DEFAULT_HEADERS = {
   Authorization: `Bearer ${env.EXPO_PUBLIC_HEALTH_API_TOKEN}`,
@@ -91,6 +100,100 @@ export async function getDailyHealth(from: string, to: string): Promise<HealthDa
   });
 }
 
+export type HealthDataEnvelope<T> = {
+  data: T;
+  meta: Record<string, string | number | boolean>;
+};
+
+export type HealthDailySummaryResponse = HealthDataEnvelope<HealthDailySummary>;
+export type HealthRangeSummaryResponse = HealthDataEnvelope<HealthSummaryRange>;
+export type HealthCapabilitiesResponse = HealthDataEnvelope<Record<string, unknown>>;
+
+export type StructuredHealthQueryRequest =
+  | {
+      intent: "daily_summary";
+      day: string;
+      timezone?: string;
+      utterance?: string;
+    }
+  | {
+      intent: "range_summary";
+      from: string;
+      to: string;
+      timezone?: string;
+      utterance?: string;
+    }
+  | {
+      intent: "yesterday_summary";
+      timezone?: string;
+      utterance?: string;
+    };
+
+export type StructuredHealthQueryResponse = HealthDataEnvelope<{
+  intent: StructuredHealthQueryRequest["intent"];
+  utterance?: string;
+  summary: HealthDailySummary | HealthSummaryRange;
+}>;
+
+export async function getHealthDailySummary(day: string, timezone?: string): Promise<HealthDailySummaryResponse> {
+  const query = new URLSearchParams({
+    day,
+  });
+  if (timezone !== undefined) {
+    query.set("timezone", timezone);
+  }
+
+  return requestJson<HealthDailySummaryResponse>({
+    path: `/health/summary/daily?${query.toString()}`,
+    method: "GET",
+  });
+}
+
+export async function getHealthRangeSummary(
+  from: string,
+  to: string,
+  timezone?: string,
+): Promise<HealthRangeSummaryResponse> {
+  const query = new URLSearchParams({
+    from,
+    to,
+  });
+  if (timezone !== undefined) {
+    query.set("timezone", timezone);
+  }
+
+  return requestJson<HealthRangeSummaryResponse>({
+    path: `/health/summary/range?${query.toString()}`,
+    method: "GET",
+  });
+}
+
+export async function getHealthYesterdaySummary(timezone?: string): Promise<HealthDailySummaryResponse> {
+  const query = new URLSearchParams();
+  if (timezone !== undefined) {
+    query.set("timezone", timezone);
+  }
+
+  const queryString = query.toString();
+  const path =
+    queryString.length > 0 ? `/health/summary/yesterday?${queryString}` : "/health/summary/yesterday";
+
+  return requestJson<HealthDailySummaryResponse>({
+    path,
+    method: "GET",
+  });
+}
+
+export async function queryHealth(
+  request: StructuredHealthQueryRequest,
+): Promise<StructuredHealthQueryResponse> {
+  return requestJson<StructuredHealthQueryResponse>({
+    path: "/health/query",
+    method: "POST",
+    body: request,
+  });
+}
+
 export type HealthRawResponse = {
   items: {
     sampleKey: string;
@@ -130,6 +233,72 @@ export async function getRawHealth(args: {
 
   return requestJson<HealthRawResponse>({
     path: `/health/raw?${query.toString()}`,
+    method: "GET",
+  });
+}
+
+export type HealthWriteIntentUpsertResponse = HealthDataEnvelope<{
+  created: boolean;
+  intent: HealthWriteIntent;
+}>;
+
+export async function upsertHealthWriteIntent(
+  intent: HealthWriteIntentPayload,
+): Promise<HealthWriteIntentUpsertResponse> {
+  return requestJson<HealthWriteIntentUpsertResponse>({
+    path: "/health/write-intents",
+    method: "POST",
+    body: intent,
+  });
+}
+
+export type HealthPendingWriteIntentResponse = HealthDataEnvelope<{
+  items: HealthWriteIntent[];
+  nextCursor: string | null;
+}>;
+
+export async function listPendingHealthWriteIntents(args: {
+  limit: number;
+  cursor?: string;
+}): Promise<HealthPendingWriteIntentResponse> {
+  const query = new URLSearchParams({
+    limit: String(args.limit),
+  });
+
+  if (args.cursor !== undefined) {
+    query.set("cursor", args.cursor);
+  }
+
+  return requestJson<HealthPendingWriteIntentResponse>({
+    path: `/health/write-intents/pending?${query.toString()}`,
+    method: "GET",
+  });
+}
+
+export type HealthAckWriteIntentResponse = HealthDataEnvelope<{
+  intent: HealthWriteIntent;
+}>;
+
+export async function ackHealthWriteIntent(
+  request: HealthWriteIntentAckRequest,
+): Promise<HealthAckWriteIntentResponse> {
+  return requestJson<HealthAckWriteIntentResponse>({
+    path: "/health/write-intents/ack",
+    method: "POST",
+    body: request,
+  });
+}
+
+export async function getHealthOpenApiDocument(): Promise<Record<string, unknown>> {
+  return requestJson<Record<string, unknown>>({
+    path: "/health/openapi.json",
+    method: "GET",
+  });
+}
+
+export async function getHealthCapabilities(): Promise<HealthCapabilitiesResponse> {
+  return requestJson<HealthCapabilitiesResponse>({
+    path: "/health/capabilities",
     method: "GET",
   });
 }
