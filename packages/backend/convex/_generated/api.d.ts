@@ -9,6 +9,9 @@
  */
 
 import type * as healthCheck from "../healthCheck.js";
+import type * as healthDomain from "../healthDomain.js";
+import type * as healthInternal from "../healthInternal.js";
+import type * as healthTypes from "../healthTypes.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +21,9 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   healthCheck: typeof healthCheck;
+  healthDomain: typeof healthDomain;
+  healthInternal: typeof healthInternal;
+  healthTypes: typeof healthTypes;
 }>;
 
 /**
