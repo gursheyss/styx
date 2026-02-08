@@ -11,6 +11,9 @@
     "dotenv": "catalog:",
     "zod": "catalog:"
   },
+  "scripts": {
+    "check-types": "tsc -p tsconfig.json --noEmit"
+  },
   "devDependencies": {
     "@styx/config": "workspace:*",
     "typescript": "catalog:"
