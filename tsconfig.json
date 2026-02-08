@@ -1,0 +1,3 @@
+{
+  "extends": "@styx/config/tsconfig.base.json"
+}
