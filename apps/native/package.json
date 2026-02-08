@@ -9,7 +9,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "prebuild": "expo prebuild",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "bun test lib/health/normalize.test.ts lib/health/sync.test.ts"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

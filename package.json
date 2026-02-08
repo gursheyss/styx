@@ -22,7 +22,9 @@
     "dev:web": "turbo -F web dev",
     "dev:server": "turbo -F @styx/backend dev",
     "dev:setup": "turbo -F @styx/backend dev:setup",
-    "check": "oxlint && oxfmt --write"
+    "check": "oxlint && oxfmt --write",
+    "test": "turbo test",
+    "test:health": "bun run -F @styx/backend test && bun run -F native test"
   },
   "dependencies": {
     "@styx/env": "workspace:*",

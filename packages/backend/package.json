@@ -6,7 +6,8 @@
   "author": "",
   "scripts": {
     "dev": "convex dev",
-    "dev:setup": "convex dev --configure --until-success"
+    "dev:setup": "convex dev --configure --until-success",
+    "test": "bun test convex/healthDomain.test.ts convex/healthHttpHandlers.test.ts"
   },
   "dependencies": {
     "convex": "catalog:",
